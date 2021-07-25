@@ -1,0 +1,14 @@
+{
+    "deno.enable": true,
+    "deno.lint": true,
+    "deno.unstable": true,
+    "superBG.disable": false,
+    "superBG.images": [
+        "/home/tohsaka/Pictures/wallhaven-ymevdk.png"
+    ],
+    "superBG.activeImage": 0,
+    "superBG.url": "",
+    "deno.suggest.imports.hosts": {
+        "https://deno.land": false
+    }
+}
