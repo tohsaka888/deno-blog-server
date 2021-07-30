@@ -6,7 +6,10 @@ const router = new Router();
 
 // 设置响应头
 const responseHeader = new Headers({
-  'content-type': 'application/json;charset=UTF-8'
+  'content-type': 'application/json;charset=UTF-8',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': '*',
+  'Access-Control-Allow-Headers': '*',
 })
 
 console.log("博客服务已经在8080端口启用");
