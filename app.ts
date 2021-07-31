@@ -16,6 +16,7 @@ console.log("博客服务已经在8080端口启用");
 
 // 路由匹配
 router.get("/", (ctx) => {
+  ctx.response.headers = responseHeader;
   ctx.response.body = "欢迎来到博客后端系统";
 });
 
@@ -37,6 +38,7 @@ router.post("/addArticle", async (ctx) => {
 
 router.get("/getArticles", async (ctx) => {
   ctx.response.status = 200;
+  ctx.response.headers = responseHeader;
   ctx.response.body = await searchArticle();
 });
 
