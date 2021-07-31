@@ -12,7 +12,7 @@ const responseHeader = new Headers({
   'Access-Control-Allow-Headers': '*',
 })
 
-console.log("博客服务已经在8080端口启用");
+console.log("博客服务已经在8085端口启用");
 
 // 路由匹配
 router.get("/", (ctx) => {
