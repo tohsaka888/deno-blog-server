@@ -52,7 +52,7 @@ router.post("/login", async (ctx) => {
   try {
     let message: string;
     ctx.response.status = 200;
-    const user: User = await ctx.request.body().value;
+    const user: User = JSON.parse(await ctx.request.body().value);
     if (user) {
       const dbStatus: number | undefined = await searchUser(
         user.username,
