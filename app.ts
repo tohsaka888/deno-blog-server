@@ -74,7 +74,13 @@ router.post("/login", async (ctx) => {
       }
       ctx.response.headers = responseHeader;
       ctx.response.status = 200;
-      ctx.cookies.set("loginUser", user.username, { expires: new Date(new Date().getDate() + 7) });
+      ctx.cookies.set("loginUser", user.username, {
+        expires: new Date(new Date().getDate() + 7),
+      });
+      const cookie: string | undefined = ctx.cookies.get("loginUser");
+      if (cookie !== undefined) {
+        responseHeader.append("set-Cookie", cookie);
+      }
       ctx.response.body = {
         message: message,
         code: 200,
