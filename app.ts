@@ -1,5 +1,11 @@
 import { Application, Router } from "https://deno.land/x/oak@v8.0.0/mod.ts";
 import {
+  create,
+  verify,
+  getNumericDate,
+  Header,
+} from "https://deno.land/x/djwt@v2.2/mod.ts";
+import {
   searchArticle,
   insertArticle,
   searchUser,
@@ -9,13 +15,20 @@ import {
 const app = new Application();
 const router = new Router();
 
-// 设置响应头
+type LoginStatus = {
+  token: string;
+};
+
+// 设置响应头 处理跨域
 const responseHeader = new Headers({
   "content-type": "application/json;charset=UTF-8",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "*",
   "Access-Control-Allow-Headers": "*",
 });
+
+const tokenHeader: Header = { alg: "HS512", typ: "JWT" };
+const expiresDate: number = getNumericDate(60 * 60 * 24 * 15); // 设置15天后过期
 
 console.log("博客服务已经在8085端口启用");
 
@@ -51,6 +64,7 @@ router.get("/getArticles", async (ctx) => {
 router.post("/login", async (ctx) => {
   try {
     let message: string;
+    let token: string;
     ctx.response.status = 200;
     const user: User = JSON.parse(await ctx.request.body().value);
     if (user) {
@@ -61,31 +75,45 @@ router.post("/login", async (ctx) => {
       switch (dbStatus) {
         case 0:
           message = "登陆成功";
+
+          // 接受三个参数 Header Payload Signature
+          token = await create(
+            tokenHeader, // 算法加密方式和类型
+            { username: user.username, exp: expiresDate }, // token包含的数据
+            "secret"
+          );
+          ctx.response.status = 200;
+          ctx.response.headers = responseHeader;
+          ctx.response.body = {
+            message: message,
+            code: 200,
+            token: token,
+          };
           break;
         case 1:
           message = "密码错误";
+          ctx.response.status = 200;
+          ctx.response.headers = responseHeader;
+          ctx.response.body = {
+            message: message,
+            code: 200,
+            token: "",
+          };
           break;
         case 2:
           message = "用户不存在";
+          ctx.response.status = 200;
+          ctx.response.headers = responseHeader;
+          ctx.response.body = {
+            message: message,
+            code: 200,
+            token: "",
+          };
           break;
         default:
           message = "";
           break;
       }
-      ctx.cookies.set("loginUser", user.username, {
-        expires: new Date(new Date().getDate() + 7),
-      });
-      const cookie: string | undefined = ctx.cookies.get("loginUser");
-      if (cookie !== undefined) {
-        responseHeader.append("set-Cookie", cookie);
-      }
-      ctx.response.status = 200;
-      ctx.response.headers = responseHeader;
-      ctx.response.body = {
-        message: message,
-        code: 200,
-        cookie: ctx.cookies.get("loginUser"),
-      };
     }
   } catch (error) {
     const errorMsg: string = error.name + error.message;
@@ -96,13 +124,28 @@ router.post("/login", async (ctx) => {
 });
 
 //获取登陆状态
-router.get("/login/status", (ctx) => {
-  if (ctx.cookies.get("loginUser")) {
-    ctx.response.body = {
-      login: true,
-      message: `欢迎${ctx.cookies.get("loginUser")}`,
-      code: 200,
-    };
+router.post("/login/status", async (ctx) => {
+  try {
+    const requestBody: LoginStatus = JSON.parse(await ctx.request.body().value);
+    const token: string = requestBody.token;
+    const payload = await verify(token, "secret", "HS512");
+    // 判断token是否过期
+    if (payload.exp) {
+      if (payload.exp > getNumericDate(new Date())) {
+        ctx.response.status = 200;
+        ctx.response.headers = responseHeader;
+        ctx.response.body = { code: 200, username: payload.username };
+      } else {
+        ctx.response.status = 200;
+        ctx.response.headers = responseHeader;
+        ctx.response.body = { code: 300, errmsg: "登陆状态过期" };
+      }
+    }
+  } catch (error) {
+    const errorMsg: string = error.name + error.message;
+    ctx.response.status = 300;
+    ctx.response.headers = responseHeader;
+    ctx.response.body = { code: 300, errmsg: errorMsg };
   }
 });
 
